@@ -1,0 +1,272 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Love Letter Theme Colors */
+  --cream: #FFF8F0;
+  --warm-white: #FFFDF7;
+  --pencil: #4A4A4A;
+  --blush: #FFB5B5;
+  --mint: #B5E8D5;
+  --lavender: #D4C5F9;
+  --golden: #F5D5A0;
+  --muted-text: #8B8078;
+  --coffee-stain: #E8D5B8;
+  --ruled-line: #E8DFD3;
+  --margin-red: #F4A6A6;
+  --cork: #F0E6D4;
+
+  /* System tokens */
+  --background: var(--cream);
+  --foreground: var(--pencil);
+  --card: var(--warm-white);
+  --card-foreground: var(--pencil);
+  --popover: var(--warm-white);
+  --popover-foreground: var(--pencil);
+  --primary: var(--blush);
+  --primary-foreground: #fff;
+  --secondary: var(--mint);
+  --secondary-foreground: var(--pencil);
+  --muted: var(--cream);
+  --muted-foreground: var(--muted-text);
+  --accent: var(--lavender);
+  --accent-foreground: var(--pencil);
+  --destructive: #ef4444;
+  --destructive-foreground: #fff;
+  --border: var(--pencil);
+  --input: var(--pencil);
+  --ring: var(--blush);
+  --radius: 0.75rem;
+}
+
+@theme inline {
+  --font-sans: 'Nunito', sans-serif;
+  --font-serif: 'Caveat', cursive;
+  --font-mono: 'Architects Daughter', cursive;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  
+  /* Custom colors for Tailwind */
+  --color-cream: var(--cream);
+  --color-warm-white: var(--warm-white);
+  --color-pencil: var(--pencil);
+  --color-blush: var(--blush);
+  --color-mint: var(--mint);
+  --color-lavender: var(--lavender);
+  --color-golden: var(--golden);
+  --color-muted-text: var(--muted-text);
+  --color-coffee-stain: var(--coffee-stain);
+  --color-ruled-line: var(--ruled-line);
+  --color-margin-red: var(--margin-red);
+  --color-cork: var(--cork);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-cream text-pencil;
+  }
+}
+
+/* Paper grain texture */
+.paper-texture {
+  background-image: 
+    repeating-conic-gradient(
+      from 0deg at 50% 50%,
+      transparent 0deg,
+      rgba(0, 0, 0, 0.01) 0.5deg,
+      transparent 1deg
+    );
+}
+
+/* Paper crease lines */
+.paper-crease {
+  background-image: 
+    linear-gradient(
+      135deg,
+      transparent 0%,
+      rgba(74, 74, 74, 0.03) 49.5%,
+      rgba(74, 74, 74, 0.05) 50%,
+      rgba(74, 74, 74, 0.03) 50.5%,
+      transparent 100%
+    );
+}
+
+/* Wobble animation */
+@keyframes wobble {
+  0%, 100% { transform: rotate(-0.3deg); }
+  50% { transform: rotate(0.3deg); }
+}
+
+.wobble {
+  animation: wobble 3s ease-in-out infinite;
+}
+
+/* Pulse animation for heart */
+@keyframes heartPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+.heart-pulse {
+  animation: heartPulse 2s ease-in-out infinite;
+}
+
+/* Float animation for doodles */
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(2deg); }
+}
+
+.float {
+  animation: float 8s ease-in-out infinite;
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  33% { transform: translateY(-5px) translateX(3px); }
+  66% { transform: translateY(3px) translateX(-3px); }
+}
+
+.float-slow {
+  animation: floatSlow 12s ease-in-out infinite;
+}
+
+/* Page flip animation */
+@keyframes flipOut {
+  0% { transform: perspective(1200px) rotateY(0deg); opacity: 1; }
+  100% { transform: perspective(1200px) rotateY(-90deg); opacity: 0; }
+}
+
+@keyframes flipIn {
+  0% { transform: perspective(1200px) rotateY(5deg); opacity: 0; }
+  100% { transform: perspective(1200px) rotateY(0deg); opacity: 1; }
+}
+
+.page-flip-out {
+  animation: flipOut 600ms ease-out forwards;
+  transform-origin: left center;
+}
+
+.page-flip-in {
+  animation: flipIn 600ms ease-out forwards;
+}
+
+/* Quill drawing animation */
+@keyframes drawLine {
+  0% { stroke-dashoffset: 100; }
+  100% { stroke-dashoffset: 0; }
+}
+
+.quill-line {
+  stroke-dasharray: 100;
+  animation: drawLine 1.5s ease-in-out infinite;
+}
+
+/* Falling celebration animation */
+@keyframes fall {
+  0% { 
+    transform: translateY(-100px) rotate(0deg) translateX(0);
+    opacity: 1;
+  }
+  100% { 
+    transform: translateY(100vh) rotate(360deg) translateX(20px);
+    opacity: 0;
+  }
+}
+
+.falling {
+  animation: fall var(--fall-duration, 3s) ease-in forwards;
+  animation-delay: var(--fall-delay, 0s);
+}
+
+/* Notebook lines background */
+.notebook-lines {
+  background: 
+    repeating-linear-gradient(
+      transparent,
+      transparent 27px,
+      var(--ruled-line) 27px,
+      var(--ruled-line) 28px
+    );
+}
+
+/* Cork texture */
+.cork-texture {
+  background-color: var(--cork);
+  background-image: 
+    radial-gradient(circle at 20% 35%, rgba(139, 128, 120, 0.1) 1px, transparent 1px),
+    radial-gradient(circle at 75% 44%, rgba(139, 128, 120, 0.08) 1px, transparent 1px),
+    radial-gradient(circle at 46% 52%, rgba(139, 128, 120, 0.1) 1px, transparent 1px);
+  background-size: 15px 15px;
+}
+
+/* Torn paper edge */
+.torn-edge {
+  clip-path: polygon(
+    0% 4%, 2% 2%, 5% 5%, 8% 1%, 12% 4%, 15% 2%, 18% 5%, 22% 1%, 
+    25% 3%, 28% 5%, 32% 2%, 35% 4%, 38% 1%, 42% 3%, 45% 5%, 
+    48% 2%, 52% 4%, 55% 1%, 58% 3%, 62% 5%, 65% 2%, 68% 4%, 
+    72% 1%, 75% 3%, 78% 5%, 82% 2%, 85% 4%, 88% 1%, 92% 3%, 
+    95% 5%, 98% 2%, 100% 4%, 100% 100%, 0% 100%
+  );
+}
+
+/* Focus styles */
+*:focus-visible {
+  outline: 2px dashed var(--pencil);
+  outline-offset: 2px;
+}
+
+/* Jiggle animation */
+@keyframes jiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-3deg); }
+  75% { transform: rotate(3deg); }
+}
+
+.jiggle {
+  animation: jiggle 0.3s ease-in-out;
+}
+
+/* Fade in up animation for staggered entries */
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 500ms ease-out forwards;
+  opacity: 0;
+}
