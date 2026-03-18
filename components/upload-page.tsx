@@ -201,7 +201,10 @@ export function UploadPage({ formData, setFormData, onSubmit }: UploadPageProps)
 
       {/* Photo Upload Section */}
       <section className="mb-10">
-        <h2 className="font-serif text-2xl text-pencil mb-1">Drop your best shots</h2>
+        <div className="flex items-baseline gap-2 mb-1">
+          <h2 className="font-serif text-2xl text-pencil">Drop your best shots</h2>
+          <span className="font-mono text-sm text-muted-text">(optional)</span>
+        </div>
         <p className="font-sans text-sm text-muted-text mb-4">1–5 photos · JPEG or PNG</p>
         
         <div
