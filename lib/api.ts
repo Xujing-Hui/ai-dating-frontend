@@ -1,4 +1,4 @@
-export type RewriteBioTone = 'casual' | 'professional' | 'bold'
+export type RewriteBioTone = 'casual' | 'bold' | 'polite' | 'humorous' | 'warm'
 
 export interface RewriteBioRequest {
   bio: string
@@ -23,7 +23,7 @@ export interface RankPhotosResponse {
   rankedPhotos: RankedPhoto[]
 }
 
-export type GenerateOpenersTone = 'bold' | 'polite' | 'concise'
+export type GenerateOpenersTone = 'casual' | 'bold' | 'polite' | 'humorous' | 'warm'
 
 export interface GenerateOpenersRequest {
   bio: string
