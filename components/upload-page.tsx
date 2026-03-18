@@ -2,25 +2,23 @@
 
 import { useState } from "react"
 import type { FormData, VibeType, UploadedPhoto } from "@/app/page"
-import { HeartIcon } from "@/components/icons/heart-icon"
 import { SquigglyUnderline } from "@/components/icons/squiggly-underline"
 import { CameraIcon } from "@/components/icons/camera-icon"
 import { QuillIcon } from "@/components/icons/quill-icon"
 import { toast } from "sonner"
 import { rewriteBio, type RewriteBioTone } from "@/lib/api"
-import { 
-  PenLine, 
-  Sparkles, 
-  Heart, 
-  Zap, 
-  Bot, 
-  Mail, 
+import {
+  PenLine,
+  Sparkles,
+  Heart,
+  Zap,
+  Bot,
+  Mail,
   Check,
-  Lightbulb,
-  Compass,
+  Smile,
   Coffee,
   Flame,
-  BookOpen
+  Star
 } from "lucide-react"
 
 interface UploadPageProps {
@@ -29,13 +27,12 @@ interface UploadPageProps {
   onSubmit: (rewrittenBios: string[]) => void
 }
 
-const vibeOptions: { value: VibeType; label: string; icon: typeof Lightbulb; bg: string; emoji: string }[] = [
-  { value: "witty", label: "Witty", icon: Lightbulb, bg: "#FFF3CD", emoji: "😏" },
+const vibeOptions: { value: VibeType; label: string; icon: typeof Smile; bg: string; emoji: string }[] = [
+  { value: "humorous", label: "Humorous", icon: Smile, bg: "#FFF3CD", emoji: "😄" },
   { value: "warm", label: "Warm", icon: Heart, bg: "#FFE0E0", emoji: "🥰" },
-  { value: "adventurous", label: "Adventurous", icon: Compass, bg: "#D4EDDA", emoji: "🌍" },
+  { value: "polite", label: "Polite", icon: Star, bg: "#D4EDDA", emoji: "🌸" },
   { value: "chill", label: "Chill", icon: Coffee, bg: "#F0E6D4", emoji: "😌" },
   { value: "flirty", label: "Flirty", icon: Flame, bg: "#FDDDE6", emoji: "😘" },
-  { value: "nerdy", label: "Nerdy", icon: BookOpen, bg: "#E0D4F5", emoji: "🤓" },
 ]
 
 export function UploadPage({ formData, setFormData, onSubmit }: UploadPageProps) {
@@ -46,16 +43,12 @@ export function UploadPage({ formData, setFormData, onSubmit }: UploadPageProps)
 
   const vibeToTone = (vibe: VibeType): RewriteBioTone => {
     switch (vibe) {
-      case "nerdy":
-        return "professional"
-      case "flirty":
-        return "bold"
-      case "witty":
-      case "warm":
-      case "adventurous":
+      case "humorous": return "humorous"
+      case "warm": return "warm"
+      case "polite": return "polite"
+      case "flirty": return "bold"
       case "chill":
-      default:
-        return "casual"
+      default: return "casual"
     }
   }
 
@@ -121,7 +114,7 @@ export function UploadPage({ formData, setFormData, onSubmit }: UploadPageProps)
       <section className="mb-10">
         <div 
           className="bg-warm-white rounded-xl p-1 border-2 border-dashed border-pencil shadow-md"
-          style={{ transform: "rotate(-0.4deg)", borderDasharray: "8 4 12 4" }}
+          style={{ transform: "rotate(-0.4deg)" }}
         >
           <div className="relative notebook-lines border-l-2 border-margin-red pl-11 pr-4 py-4 min-h-[200px]">
             <label htmlFor="bio" className="sr-only">Your bio</label>
@@ -175,7 +168,6 @@ export function UploadPage({ formData, setFormData, onSubmit }: UploadPageProps)
                 style={{ 
                   backgroundColor: vibe.bg,
                   borderStyle: isSelected ? "solid" : "dashed",
-                  borderDasharray: isSelected ? undefined : "8 4 12 4"
                 }}
                 aria-pressed={isSelected}
                 aria-label={`Select ${vibe.label} vibe`}
@@ -213,7 +205,6 @@ export function UploadPage({ formData, setFormData, onSubmit }: UploadPageProps)
             transition-all cursor-pointer
             ${isDragging ? "border-blush bg-warm-white" : ""}
           `}
-          style={{ borderDasharray: "8 4 12 4" }}
           onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
           onDragLeave={() => setIsDragging(false)}
           onDrop={(e) => {
@@ -282,7 +273,6 @@ export function UploadPage({ formData, setFormData, onSubmit }: UploadPageProps)
               {formData.photos.length < 5 && (
                 <div 
                   className="w-28 h-32 border-2 border-dashed border-pencil/40 rounded flex items-center justify-center text-pencil/40"
-                  style={{ borderDasharray: "8 4 12 4" }}
                 >
                   <span className="text-3xl">+</span>
                 </div>
@@ -304,7 +294,6 @@ export function UploadPage({ formData, setFormData, onSubmit }: UploadPageProps)
             transition-all hover:-translate-y-0.5 hover:shadow-lg hover:wobble
             disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0
           `}
-          style={{ borderDasharray: "8 4 12 4" }}
           aria-busy={isLoading}
         >
           {isLoading ? (
@@ -343,7 +332,7 @@ function PenLineWithSparkle() {
     <div className="relative wobble">
       <div 
         className="w-16 h-16 rounded-full border-2 border-dashed flex items-center justify-center"
-        style={{ borderColor: "var(--blush)", borderDasharray: "8 4 12 4" }}
+        style={{ borderColor: "var(--blush)" }}
       >
         <PenLine className="w-8 h-8 text-pencil" strokeWidth={1.5} />
       </div>
