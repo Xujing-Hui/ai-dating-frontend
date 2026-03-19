@@ -10,7 +10,8 @@ ProfileGlow helps users optimize their dating profiles using AI. Paste your bio,
 
 ## Features
 
-- **Bio Rewriting** : Paste your current bio and pick a vibe (Humorous, Warm, Polite, Chill, Flirty). The AI generates 3 optimized versions (The Charmer, The Storyteller, The Bold One) with one-click copy.
+- **User Auth**: Sign up and log in with email/password via Supabase. Results are saved to your account.
+- **Bio Rewriting**: Paste your current bio and pick a vibe (Humorous, Warm, Polite, Chill, Flirty). The AI generates 3 optimized versions (The Charmer, The Storyteller, The Bold One) with one-click copy.
 - **Before/After Diff**: Visual word-level comparison of your original vs. rewritten bio: removed words are struck through, new words are highlighted in gold.
 - **Photo Ranking**: Upload 1–5 photos (JPEG/PNG, max 10 MB each). The AI ranks them from most to least appealing with scores and reasoning.
 - **Conversation Starters**: AI-generated personalized opening lines based on your bio and chosen vibe, each with a copy button.
@@ -22,6 +23,7 @@ ProfileGlow helps users optimize their dating profiles using AI. Paste your bio,
 | -------------- | ----------------------------------- |
 | Framework      | Next.js 16 (App Router)             |
 | Language       | TypeScript                          |
+| Auth           | Supabase Auth                       |
 | UI Components  | Radix UI + shadcn/ui                |
 | Styling        | Tailwind CSS 4                      |
 | Forms          | React Hook Form + Zod              |
@@ -32,6 +34,7 @@ ProfileGlow helps users optimize their dating profiles using AI. Paste your bio,
 
 - **Node.js** 18+ (recommended: 20+)
 - **npm** 9+ or **pnpm** 8+
+- Supabase account + project
 - Backend API running: see [Dating-Backend](https://github.com/KaichenQu/Dating-Backend)
 
 ## Getting Started
@@ -51,11 +54,15 @@ npm install
 
 ### 3. Configure environment variables
 
-Create a `.env.local` file in the project root:
+Create a `.env` file in the project root:
 
 ```env
 # Backend API URL (default: http://localhost:8080)
 NEXT_PUBLIC_API_URL=http://localhost:8080
+
+# Supabase (Settings → API)
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-public-key
 ```
 
 If the backend is deployed remotely, replace with the remote URL:
@@ -86,9 +93,12 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ```
 ai-dating-frontend/
 ├── app/                        # Next.js App Router
+│   ├── auth/
+│   │   └── page.tsx            # Login / sign-up page
 │   ├── globals.css
+│   ├── icon.jpg                # Browser tab favicon
 │   ├── layout.tsx              # Root layout + Toaster
-│   └── page.tsx                # Main page (upload → results flow)
+│   └── page.tsx                # Main page (auth gate → upload → results flow)
 ├── components/
 │   ├── icons/                  # Custom icon components
 │   ├── ui/                     # shadcn/ui primitives (Button, Card, Dialog, etc.)
@@ -98,14 +108,11 @@ ai-dating-frontend/
 │   ├── coffee-stains.tsx       # Decorative stain effects
 │   ├── falling-celebration.tsx # Celebration animation on results page
 │   └── theme-provider.tsx      # Dark/light theme support
-├── hooks/
-│   ├── use-mobile.ts           # Mobile viewport detection
-│   └── use-toast.ts            # Toast notification hook
 ├── lib/
-│   ├── api.ts                  # Backend API service layer
+│   ├── api.ts                  # Backend API service layer (attaches Supabase JWT)
+│   ├── supabase.ts             # Supabase client
 │   └── utils.ts                # Utility functions (cn, etc.)
 ├── public/                     # Static assets
-├── styles/                     # Additional stylesheets
 ├── API_DOCS.md                 # Backend API documentation
 ├── next.config.mjs
 ├── package.json
@@ -123,7 +130,7 @@ The frontend connects to a Spring Boot backend via three endpoints:
 | `/api/profile/rank-photos`      | POST   | multipart/form-data | Rank uploaded photos       |
 | `/api/profile/generate-openers` | POST   | application/json    | Generate conversation starters |
 
-All API calls include a 15-second timeout and error handling via toast notifications. See [`API_DOCS.md`](./API_DOCS.md) for detailed request/response formats.
+All API calls include a 15-second timeout, error handling via toast notifications, and automatically attach the Supabase JWT as `Authorization: Bearer <token>`. See [`API_DOCS.md`](./API_DOCS.md) for detailed request/response formats.
 
 ## Deployment
 
@@ -132,11 +139,14 @@ All API calls include a 15-second timeout and error handling via toast notificat
 1. Connect this GitHub repository in the Netlify dashboard
 2. Set build command: `npm run build`
 3. Set publish directory: `.next`
-4. Add environment variable: `NEXT_PUBLIC_API_URL` = your backend URL
+4. Add environment variables:
+   - `NEXT_PUBLIC_API_URL` = your backend URL
+   - `NEXT_PUBLIC_SUPABASE_URL` = your Supabase project URL
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = your Supabase anon key
 
 ## Related Repositories
 
-- **Backend:** [KaichenQu/Dating-Backend](https://github.com/KaichenQu/Dating-Backend): Spring Boot + Claude API + MongoDB
+- **Backend:** [KaichenQu/Dating-Backend](https://github.com/KaichenQu/Dating-Backend): Spring Boot + Claude API + Supabase PostgreSQL
 
 ## Team
 
