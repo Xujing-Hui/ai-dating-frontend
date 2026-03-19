@@ -2,7 +2,12 @@
 
 import { useState, useEffect } from "react"
 import type { FormData, VibeType } from "@/app/page"
-import { generateOpeners, type GenerateOpenersTone } from "@/lib/api"
+import {
+  generateOpeners,
+  saveBio,
+  saveStarter,
+  type GenerateOpenersTone,
+} from "@/lib/api"
 import { FallingCelebration } from "@/components/falling-celebration"
 import { BackArrowIcon } from "@/components/icons/back-arrow-icon"
 import { NotebookIcon } from "@/components/icons/notebook-icon"
@@ -10,15 +15,19 @@ import { CameraIcon } from "@/components/icons/camera-icon"
 import { SpeechBubbleIcon } from "@/components/icons/speech-bubble-icon"
 import { StarIcon } from "@/components/icons/star-icon"
 import { PaperClipIcon } from "@/components/icons/paper-clip-icon"
-import { WashiTape } from "@/components/icons/washi-tape"
-import { PushpinIcon } from "@/components/icons/pushpin-icon"
-import { Camera, Sparkles, Loader2 } from "lucide-react"
+import { AppSidebar } from "@/components/app-sidebar"
+import { HistoryPanel } from "@/components/history-panel"
+import { toast } from "sonner"
+import { Camera, Sparkles, Loader2, ChevronLeft, ChevronRight, BookMarked } from "lucide-react"
 
 interface ResultsPageProps {
   formData: FormData
   rewrittenBios: string[]
   onBack: () => void
+  onLogout: () => void
 }
+
+type Tab = "glowup" | "photos" | "starters" | "history"
 
 const optimizedBiosMeta = [
   { title: "✦ The Charmer", bg: "bg-golden", rotate: "-1.2deg" },
@@ -37,12 +46,19 @@ function vibeToTone(vibe: VibeType): GenerateOpenersTone {
   }
 }
 
-export function ResultsPage({ formData, rewrittenBios, onBack }: ResultsPageProps) {
+export function ResultsPage({ formData, rewrittenBios, onBack, onLogout }: ResultsPageProps) {
   const [showCelebration, setShowCelebration] = useState(true)
-  const [copiedBio, setCopiedBio] = useState<number | null>(null)
-  const [copiedStarter, setCopiedStarter] = useState<number | null>(null)
+  const [activeTab, setActiveTab] = useState<Tab>("glowup")
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [starters, setStarters] = useState<string[]>([])
   const [startersLoading, setStartersLoading] = useState(true)
+  const [savingBio, setSavingBio] = useState<number | null>(null)
+  const [savingStarter, setSavingStarter] = useState<number | null>(null)
+  const [savedBioIndices, setSavedBioIndices] = useState<Set<number>>(new Set())
+  const [savedStarterIndices, setSavedStarterIndices] = useState<Set<number>>(new Set())
+  const [justSavedBio, setJustSavedBio] = useState<number | null>(null)
+  const [justSavedStarter, setJustSavedStarter] = useState<number | null>(null)
+  const [currentBioIndex, setCurrentBioIndex] = useState(0)
 
   useEffect(() => {
     const timer = setTimeout(() => setShowCelebration(false), 3500)
@@ -57,76 +73,165 @@ export function ResultsPage({ formData, rewrittenBios, onBack }: ResultsPageProp
       .finally(() => setStartersLoading(false))
   }, [formData.bio, formData.vibe])
 
-  const copyToClipboard = async (text: string, type: "bio" | "starter", index: number) => {
-    await navigator.clipboard.writeText(text)
-    if (type === "bio") {
-      setCopiedBio(index)
-      setTimeout(() => setCopiedBio(null), 2000)
-    } else {
-      setCopiedStarter(index)
-      setTimeout(() => setCopiedStarter(null), 2000)
-    }
-  }
-
   const optimizedBiosToShow = rewrittenBios.map((text, index) => ({
     ...optimizedBiosMeta[index % optimizedBiosMeta.length],
     text,
   }))
 
+  const handleSaveBio = async (index: number) => {
+    if (savedBioIndices.has(index)) return
+    setSavingBio(index)
+    try {
+      await saveBio(optimizedBiosToShow[index].text)
+      setSavedBioIndices(prev => new Set([...prev, index]))
+      setJustSavedBio(index)
+      setTimeout(() => setJustSavedBio(null), 1500)
+      toast.success("Bio saved! 💕")
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to save bio"
+      toast.error(msg)
+    }
+    setSavingBio(null)
+  }
+
+  const handleSaveStarter = async (index: number) => {
+    if (savedStarterIndices.has(index)) return
+    setSavingStarter(index)
+    try {
+      await saveStarter(starters[index])
+      setSavedStarterIndices(prev => new Set([...prev, index]))
+      setJustSavedStarter(index)
+      setTimeout(() => setJustSavedStarter(null), 1500)
+      toast.success("Starter saved! 💬")
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to save starter"
+      toast.error(msg)
+    }
+    setSavingStarter(null)
+  }
+
+  const tabs: { id: Tab; icon: string; label: string }[] = [
+    { id: "glowup", icon: "✨", label: "Glow-Up" },
+    { id: "photos", icon: "📸", label: "Photos" },
+    { id: "starters", icon: "💬", label: "Starters" },
+    { id: "history", icon: "📝", label: "History" },
+  ]
+
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 md:py-12">
+    <div className="min-h-screen flex flex-col">
       {showCelebration && <FallingCelebration />}
-      
+
       {/* Header */}
-      <header className="flex items-center justify-between mb-10">
+      <header className="flex items-center justify-between px-4 py-4 border-b border-dashed border-pencil/20">
         <button
           onClick={onBack}
           className="flex items-center gap-2 text-pencil font-sans hover:text-blush transition-colors"
-          aria-label="Go back to upload page"
         >
           <BackArrowIcon className="w-6 h-6" />
           <span>Start Over</span>
         </button>
-        <h1 className="font-serif text-4xl md:text-5xl font-semibold text-pencil text-center flex-1">
+        <h1 className="font-serif text-3xl md:text-4xl font-semibold text-pencil">
           {"Here's Your Glow-Up 💕"}
         </h1>
-        <div className="w-24" aria-hidden="true" />
+        <div className="w-24" />
       </header>
 
-      {/* Before/After Word Diff Section */}
-      {formData.bio && optimizedBiosToShow[0] && (
-        <section className="mb-12 fade-in-up" style={{ animationDelay: "0ms" }}>
+      {/* Body */}
+      <div className="flex flex-1 overflow-hidden">
+        <AppSidebar
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={(id) => setActiveTab(id as Tab)}
+          onLogout={onLogout}
+          open={sidebarOpen}
+          onOpenChange={setSidebarOpen}
+        />
+
+        {/* Main content */}
+        <main className="flex-1 overflow-y-auto px-6 py-6">
+          {activeTab === "glowup" && (
+            <GlowUpTab
+              formData={formData}
+              optimizedBiosToShow={optimizedBiosToShow}
+              currentBioIndex={currentBioIndex}
+              setCurrentBioIndex={setCurrentBioIndex}
+              savedBioIndices={savedBioIndices}
+              savingBio={savingBio}
+              justSavedBio={justSavedBio}
+              onSaveBio={handleSaveBio}
+            />
+          )}
+          {activeTab === "photos" && (
+            <PhotosTab formData={formData} />
+          )}
+          {activeTab === "starters" && (
+            <StartersTab
+              starters={starters}
+              startersLoading={startersLoading}
+              savedStarterIndices={savedStarterIndices}
+              savingStarter={savingStarter}
+              justSavedStarter={justSavedStarter}
+              onSaveStarter={handleSaveStarter}
+            />
+          )}
+          {activeTab === "history" && <HistoryPanel />}
+        </main>
+      </div>
+    </div>
+  )
+}
+
+/* ── Glow-Up Tab ── */
+function GlowUpTab({
+  formData,
+  optimizedBiosToShow,
+  currentBioIndex,
+  setCurrentBioIndex,
+  savedBioIndices,
+  savingBio,
+  justSavedBio,
+  onSaveBio,
+}: {
+  formData: FormData
+  optimizedBiosToShow: { title: string; bg: string; rotate: string; text: string }[]
+  currentBioIndex: number
+  setCurrentBioIndex: (i: number) => void
+  savedBioIndices: Set<number>
+  savingBio: number | null
+  justSavedBio: number | null
+  onSaveBio: (i: number) => void
+}) {
+  const currentBio = optimizedBiosToShow[currentBioIndex]
+
+  return (
+    <div className="max-w-3xl mx-auto space-y-8 fade-in-up">
+      {/* Before / After diff */}
+      {formData.bio && currentBio && (
+        <section>
           <div className="flex flex-col md:flex-row items-stretch gap-6 md:gap-4 relative">
-            {/* Before Card */}
-            <div className="flex-1 bg-[#F5F0E8] rounded-lg p-5 border-2 border-dashed border-pencil/60 relative fade-in-up" style={{ animationDelay: "200ms" }}>
+            <div className="flex-1 bg-[#F5F0E8] rounded-lg p-5 border-2 border-dashed border-pencil/60">
               <h3 className="font-mono text-lg text-pencil mb-3 flex items-center gap-2">
-                <span>📝</span>
-                <span>Your Original</span>
+                <span>📝</span><span>Your Original</span>
               </h3>
               <p className="font-sans text-pencil/80 leading-relaxed italic">
-                <WordDiff mode="before" before={formData.bio} after={optimizedBiosToShow[0].text} />
+                <WordDiff mode="before" before={formData.bio} after={currentBio.text} />
               </p>
             </div>
-
-            {/* Arrow */}
             <div className="flex items-center justify-center md:-mx-2 z-10">
               <CurvedArrow />
             </div>
-
-            {/* After Card */}
             <div
-              className="flex-1 bg-warm-white rounded-lg p-5 border-2 border-dashed border-pencil relative fade-in-up"
-              style={{ transform: "scale(1.02)", boxShadow: "0 0 20px rgba(245,213,160,0.3)", animationDelay: "400ms" }}
+              className="flex-1 bg-warm-white rounded-lg p-5 border-2 border-dashed border-pencil relative"
+              style={{ transform: "scale(1.02)", boxShadow: "0 0 20px rgba(245,213,160,0.3)" }}
             >
               <div className="absolute -top-3 -right-3">
                 <StarIcon className="w-6 h-6 text-golden" />
               </div>
               <h3 className="font-mono text-lg text-pencil mb-3 flex items-center gap-2">
-                <span>✨</span>
-                <span>After the Glow-Up</span>
+                <span>✨</span><span>After the Glow-Up</span>
               </h3>
               <p className="font-sans text-pencil leading-relaxed">
-                <WordDiff mode="after" before={formData.bio} after={optimizedBiosToShow[0].text} />
+                <WordDiff mode="after" before={formData.bio} after={currentBio.text} />
               </p>
               <p className="font-mono text-xs text-muted-text mt-3">✦ highlighted words are new</p>
             </div>
@@ -134,170 +239,209 @@ export function ResultsPage({ formData, rewrittenBios, onBack }: ResultsPageProp
         </section>
       )}
 
-      {/* Three Column Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
-        {/* Card 1 - Optimized Bios */}
-        <div className="relative fade-in-up" style={{ animationDelay: "600ms" }}>
-          <PaperClipIcon className="absolute -top-3 -left-2 w-10 h-10 text-pencil z-10" />
-          <div 
-            className="bg-warm-white border-2 border-dashed border-pencil rounded-lg shadow-[4px_4px_0px_#E8DFD3] torn-edge pt-6 pb-4 px-4 min-h-[480px]"
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <NotebookIcon className="w-6 h-6 text-pencil" />
-              <h2 className="font-serif text-2xl text-pencil">Optimized Bios</h2>
+      {/* Optimized bios carousel */}
+      {optimizedBiosToShow.length > 0 && (
+        <section>
+          <div className="flex items-center gap-2 mb-4">
+            <NotebookIcon className="w-5 h-5 text-pencil" />
+            <h2 className="font-serif text-2xl text-pencil">Optimized Bios</h2>
+            <span className="font-mono text-sm text-muted-text ml-auto">
+              {currentBioIndex + 1} / {optimizedBiosToShow.length}
+            </span>
+          </div>
+
+          <div className="relative">
+            <PaperClipIcon className="absolute -top-3 -left-2 w-10 h-10 text-pencil z-10" />
+            <div
+              className={`${currentBio.bg} rounded-lg p-6 shadow-md relative min-h-[160px]`}
+              style={{ transform: `rotate(${currentBio.rotate})` }}
+            >
+              <h3 className="font-mono text-sm text-pencil mb-3">{currentBio.title}</h3>
+              <p className="font-sans text-pencil leading-relaxed pr-4">{currentBio.text}</p>
             </div>
-            
-            <div className="space-y-4">
-              {optimizedBiosToShow.map((bio, index) => (
-                <div
-                  key={index}
-                  className={`${bio.bg} p-4 rounded-sm shadow-md relative`}
-                  style={{ transform: `rotate(${bio.rotate})` }}
+
+            {/* Navigation + Save */}
+            <div className="flex items-center justify-between mt-4">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setCurrentBioIndex(Math.max(0, currentBioIndex - 1))}
+                  disabled={currentBioIndex === 0}
+                  className="p-2 rounded-full border border-dashed border-pencil/40 text-pencil disabled:opacity-30 hover:bg-pencil/5"
                 >
-                  <h3 className="font-mono text-sm text-pencil mb-2">{bio.title}</h3>
-                  <p className="font-sans text-sm text-pencil leading-relaxed pr-16">{bio.text}</p>
-                  <button
-                    onClick={() => copyToClipboard(bio.text, "bio", index)}
-                    className={`
-                      absolute bottom-2 right-2 px-3 py-1 rounded-full text-xs font-sans
-                      border border-dashed transition-all
-                      ${copiedBio === index 
-                        ? "bg-mint text-pencil border-mint" 
-                        : "bg-white text-pencil border-pencil hover:bg-pencil/5"
-                      }
-                    `}
-                    aria-label={`Copy ${bio.title} bio`}
-                  >
-                    {copiedBio === index ? "Copied!" : "📋 Copy"}
-                  </button>
-                </div>
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setCurrentBioIndex(Math.min(optimizedBiosToShow.length - 1, currentBioIndex + 1))}
+                  disabled={currentBioIndex === optimizedBiosToShow.length - 1}
+                  className="p-2 rounded-full border border-dashed border-pencil/40 text-pencil disabled:opacity-30 hover:bg-pencil/5"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+
+              <button
+                onClick={() => onSaveBio(currentBioIndex)}
+                disabled={savingBio === currentBioIndex || savedBioIndices.has(currentBioIndex)}
+                className={`relative flex items-center gap-2 px-4 py-2 rounded-full text-sm font-sans border border-dashed transition-all ${
+                  savedBioIndices.has(currentBioIndex)
+                    ? "bg-mint text-pencil border-mint"
+                    : "bg-white text-pencil border-pencil hover:bg-pencil/5"
+                } ${justSavedBio === currentBioIndex ? "animate-bounce" : ""}`}
+              >
+                {savingBio === currentBioIndex ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : savedBioIndices.has(currentBioIndex) ? (
+                  <><span>✓ Saved!</span>{justSavedBio === currentBioIndex && <span className="absolute -top-1 -right-1 text-sm">✨</span>}</>
+                ) : (
+                  <>
+                    <BookMarked className="w-4 h-4" /> Save
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Dots */}
+            <div className="flex justify-center gap-2 mt-3">
+              {optimizedBiosToShow.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentBioIndex(i)}
+                  className={`w-2 h-2 rounded-full transition-all ${
+                    i === currentBioIndex ? "bg-blush" : "bg-pencil/20"
+                  }`}
+                />
               ))}
             </div>
           </div>
-        </div>
-
-        {/* Card 2 - Photo Ranking */}
-        <div className="relative fade-in-up" style={{ animationDelay: "800ms" }}>
-          <WashiTape className="absolute -top-4 left-1/2 -translate-x-1/2 w-20 h-6 z-10" />
-          <div 
-            className="bg-warm-white border-2 border-dashed border-pencil rounded-lg shadow-[4px_4px_0px_#E8DFD3] torn-edge pt-8 pb-4 px-4 min-h-[480px]"
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <CameraIcon className="w-6 h-6 text-pencil" />
-              <h2 className="font-serif text-2xl text-pencil">Photo Ranking</h2>
-            </div>
-            
-            {/* Cascading Polaroids or empty state */}
-            {formData.photos.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-80 gap-3 text-center">
-                <Camera className="w-12 h-12 text-pencil/20" strokeWidth={1.5} />
-                <p className="font-sans text-sm text-muted-text italic">
-                  No photos uploaded
-                </p>
-                <p className="font-mono text-xs text-muted-text/70">
-                  Go back and add photos to get your ranking!
-                </p>
-              </div>
-            ) : (
-              <div className="relative h-80 mt-4">
-                {formData.photos.slice(0, 3).map((photo, index) => {
-                  const rotations = [-3, 1, -2]
-                  const offsets = [0, 90, 180]
-                  const isFirst = index === 0
-                  const size = isFirst ? 150 : 115
-
-                  return (
-                    <div
-                      key={photo.id}
-                      className={`absolute left-1/2 -translate-x-1/2 bg-white p-2 pb-12 shadow-lg ${isFirst ? "z-30" : index === 1 ? "z-20" : "z-10"}`}
-                      style={{
-                        transform: `translateX(-50%) rotate(${rotations[index]}deg)`,
-                        width: `${size}px`,
-                        top: `${offsets[index]}px`
-                      }}
-                    >
-                      <span className="absolute top-2 left-2 font-serif text-2xl text-blush font-bold">
-                        #{index + 1}
-                      </span>
-                      {isFirst && (
-                        <StarIcon className="absolute top-1 right-1 w-8 h-8 text-golden" />
-                      )}
-                      <img
-                        src={photo.url}
-                        alt={photo.name}
-                        className="w-full aspect-square object-cover"
-                      />
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Card 3 - Conversation Starters */}
-        <div className="relative fade-in-up" style={{ animationDelay: "1000ms" }}>
-          <PushpinIcon className="absolute -top-2 left-4 w-8 h-8 z-10" />
-          <div 
-            className="bg-warm-white border-2 border-dashed border-pencil rounded-lg shadow-[4px_4px_0px_#E8DFD3] torn-edge pt-6 pb-4 px-4 min-h-[480px]"
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <SpeechBubbleIcon className="w-6 h-6 text-pencil" />
-              <h2 className="font-serif text-2xl text-pencil">Conversation Starters</h2>
-            </div>
-            
-            {startersLoading ? (
-              <div className="flex flex-col items-center justify-center h-60 gap-3 text-center">
-                <Loader2 className="w-8 h-8 text-blush animate-spin" />
-                <p className="font-sans text-sm text-muted-text italic">Crafting your openers...</p>
-              </div>
-            ) : starters.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-60 gap-3 text-center">
-                <p className="font-sans text-sm text-muted-text italic">Couldn't generate starters — try again.</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {starters.map((starter: string, index: number) => {
-                  const isLeft = index % 2 === 0
-                  const bgColor = isLeft ? "bg-warm-white" : "bg-[#E8F5ED]"
-                  return (
-                    <div
-                      key={index}
-                      className={`relative ${bgColor} p-3 rounded-xl border border-dashed border-pencil/30 ${isLeft ? "mr-4 rounded-bl-none" : "ml-4 rounded-br-none"}`}
-                    >
-                      <p className="font-sans text-sm text-pencil pr-14">{starter}</p>
-                      <button
-                        onClick={() => copyToClipboard(starter, "starter", index)}
-                        className={`absolute bottom-2 right-2 px-2 py-0.5 rounded-full text-xs font-sans border border-dashed transition-all ${copiedStarter === index ? "bg-mint text-pencil border-mint" : "bg-white text-pencil border-pencil hover:bg-pencil/5"}`}
-                        aria-label={`Copy conversation starter ${index + 1}`}
-                      >
-                        {copiedStarter === index ? "Copied!" : "Copy"}
-                      </button>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <footer className="mt-16 text-center">
-        <FooterDoodle />
-        <p className="font-mono text-sm text-muted-text mt-2">
-          Made with 💕 by ProfileGlow
-        </p>
-      </footer>
+        </section>
+      )}
     </div>
   )
 }
 
+/* ── Photos Tab ── */
+function PhotosTab({ formData }: { formData: FormData }) {
+  return (
+    <div className="max-w-2xl mx-auto fade-in-up">
+      <div className="flex items-center gap-2 mb-6">
+        <CameraIcon className="w-5 h-5 text-pencil" />
+        <h2 className="font-serif text-2xl text-pencil">Photo Ranking</h2>
+      </div>
+
+      {formData.photos.length === 0 ? (
+        <div className="flex flex-col items-center justify-center h-60 gap-3 text-center">
+          <Camera className="w-12 h-12 text-pencil/20" strokeWidth={1.5} />
+          <p className="font-sans text-sm text-muted-text italic">No photos uploaded</p>
+          <p className="font-mono text-xs text-muted-text/70">Go back and add photos to get your ranking!</p>
+        </div>
+      ) : (
+        <div className="relative h-96 mt-4">
+          {formData.photos.slice(0, 3).map((photo, index) => {
+            const rotations = [-3, 1, -2]
+            const offsets = [0, 100, 200]
+            const isFirst = index === 0
+            const size = isFirst ? 160 : 120
+
+            return (
+              <div
+                key={photo.id}
+                className={`absolute left-1/2 bg-white p-2 pb-12 shadow-lg ${isFirst ? "z-30" : index === 1 ? "z-20" : "z-10"}`}
+                style={{
+                  transform: `translateX(-50%) rotate(${rotations[index]}deg)`,
+                  width: `${size}px`,
+                  top: `${offsets[index]}px`,
+                }}
+              >
+                <span className="absolute top-2 left-2 font-serif text-2xl text-blush font-bold">
+                  #{index + 1}
+                </span>
+                {isFirst && <StarIcon className="absolute top-1 right-1 w-8 h-8 text-golden" />}
+                <img src={photo.url} alt={photo.name} className="w-full aspect-square object-cover" />
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ── Starters Tab ── */
+function StartersTab({
+  starters,
+  startersLoading,
+  savedStarterIndices,
+  savingStarter,
+  justSavedStarter,
+  onSaveStarter,
+}: {
+  starters: string[]
+  startersLoading: boolean
+  savedStarterIndices: Set<number>
+  savingStarter: number | null
+  justSavedStarter: number | null
+  onSaveStarter: (i: number) => void
+}) {
+  return (
+    <div className="max-w-2xl mx-auto fade-in-up">
+      <div className="flex items-center gap-2 mb-6">
+        <SpeechBubbleIcon className="w-5 h-5 text-pencil" />
+        <h2 className="font-serif text-2xl text-pencil">Conversation Starters</h2>
+      </div>
+
+      {startersLoading ? (
+        <div className="flex flex-col items-center justify-center h-60 gap-3 text-center">
+          <Loader2 className="w-8 h-8 text-blush animate-spin" />
+          <p className="font-sans text-sm text-muted-text italic">Crafting your openers...</p>
+        </div>
+      ) : starters.length === 0 ? (
+        <p className="font-sans text-sm text-muted-text italic text-center mt-20">
+          Couldn't generate starters — try again.
+        </p>
+      ) : (
+        <div className="space-y-3">
+          {starters.map((starter, index) => {
+            const isLeft = index % 2 === 0
+            return (
+              <div
+                key={index}
+                className={`relative bg-warm-white p-3 rounded-xl border border-dashed border-pencil/30 ${
+                  isLeft ? "mr-8 rounded-bl-none" : "ml-8 rounded-br-none bg-[#E8F5ED]"
+                }`}
+              >
+                <p className="font-sans text-sm text-pencil pr-20">{starter}</p>
+                <button
+                  onClick={() => onSaveStarter(index)}
+                  disabled={savingStarter === index || savedStarterIndices.has(index)}
+                  className={`absolute bottom-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-sans border border-dashed transition-all ${
+                    savedStarterIndices.has(index)
+                      ? "bg-mint text-pencil border-mint"
+                      : "bg-white text-pencil border-pencil hover:bg-pencil/5"
+                  } ${justSavedStarter === index ? "animate-bounce" : ""}`}
+                >
+                  {savingStarter === index ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : savedStarterIndices.has(index) ? (
+                    <><span>✓ Saved</span>{justSavedStarter === index && <span className="text-sm">✨</span>}</>
+                  ) : (
+                    <>
+                      <BookMarked className="w-3 h-3" /> Save
+                    </>
+                  )}
+                </button>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ── Helpers ── */
 function WordDiff({ mode, before, after }: { mode: "before" | "after"; before: string; after: string }) {
   const beforeWords = new Set(before.toLowerCase().split(/\W+/).filter(Boolean))
   const afterWords = new Set(after.toLowerCase().split(/\W+/).filter(Boolean))
-
   const tokens = (mode === "before" ? before : after).split(/(\s+)/)
 
   return (
@@ -307,9 +451,7 @@ function WordDiff({ mode, before, after }: { mode: "before" | "after"; before: s
         const clean = token.toLowerCase().replace(/\W/g, "")
         const isChanged = mode === "before" ? !afterWords.has(clean) : !beforeWords.has(clean)
         if (!isChanged) return <span key={i}>{token}</span>
-        if (mode === "before") {
-          return <span key={i} className="line-through text-pencil/35">{token}</span>
-        }
+        if (mode === "before") return <span key={i} className="line-through text-pencil/35">{token}</span>
         return <span key={i} className="bg-golden/40 rounded px-0.5">{token}</span>
       })}
     </>
@@ -320,57 +462,10 @@ function CurvedArrow() {
   return (
     <div className="relative">
       <svg width="60" height="40" viewBox="0 0 60 40" fill="none" className="md:rotate-0 rotate-90">
-        <path 
-          d="M5 20 Q 30 5, 45 20" 
-          stroke="var(--blush)" 
-          strokeWidth="2.5" 
-          fill="none"
-          strokeLinecap="round"
-          strokeDasharray="8 4"
-        />
-        <path 
-          d="M40 15 L48 20 L40 25" 
-          stroke="var(--blush)" 
-          strokeWidth="2.5" 
-          fill="none"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
+        <path d="M5 20 Q 30 5, 45 20" stroke="var(--blush)" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeDasharray="8 4" />
+        <path d="M40 15 L48 20 L40 25" stroke="var(--blush)" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
-      <Sparkles 
-        className="absolute -top-1 -right-1 w-4 h-4 text-golden" 
-        strokeWidth={1.5} 
-      />
-    </div>
-  )
-}
-
-function FooterDoodle() {
-  return (
-    <div className="inline-flex items-center justify-center">
-      <svg width="48" height="36" viewBox="0 0 48 36" fill="none" className="text-pencil">
-        {/* Envelope body */}
-        <rect 
-          x="4" y="8" width="40" height="24" rx="2" 
-          stroke="currentColor" 
-          strokeWidth="1.5" 
-          strokeDasharray="8 4 12 4"
-          fill="var(--warm-white)"
-        />
-        {/* Envelope flap */}
-        <path 
-          d="M4 10 L24 22 L44 10" 
-          stroke="currentColor" 
-          strokeWidth="1.5" 
-          strokeLinecap="round"
-          strokeDasharray="8 4"
-        />
-        {/* Heart on envelope */}
-        <path 
-          d="M24 17 C22 15 19 15 19 18 C19 20 24 24 24 24 C24 24 29 20 29 18 C29 15 26 15 24 17Z" 
-          fill="var(--blush)"
-        />
-      </svg>
+      <Sparkles className="absolute -top-1 -right-1 w-4 h-4 text-golden" strokeWidth={1.5} />
     </div>
   )
 }

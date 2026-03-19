@@ -2,6 +2,8 @@
 
 import { useState } from "react"
 import type { FormData, VibeType, UploadedPhoto } from "@/app/page"
+import { AppSidebar } from "@/components/app-sidebar"
+import { HistoryPanel } from "@/components/history-panel"
 import { SquigglyUnderline } from "@/components/icons/squiggly-underline"
 import { CameraIcon } from "@/components/icons/camera-icon"
 import { QuillIcon } from "@/components/icons/quill-icon"
@@ -25,6 +27,7 @@ interface UploadPageProps {
   formData: FormData
   setFormData: React.Dispatch<React.SetStateAction<FormData>>
   onSubmit: (rewrittenBios: string[]) => void
+  onLogout: () => void
 }
 
 const vibeOptions: { value: VibeType; label: string; icon: typeof Smile; bg: string; emoji: string }[] = [
@@ -35,9 +38,16 @@ const vibeOptions: { value: VibeType; label: string; icon: typeof Smile; bg: str
   { value: "flirty", label: "Flirty", icon: Flame, bg: "#FDDDE6", emoji: "😘" },
 ]
 
-export function UploadPage({ formData, setFormData, onSubmit }: UploadPageProps) {
+export function UploadPage({ formData, setFormData, onSubmit, onLogout }: UploadPageProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
+  const [activeTab, setActiveTab] = useState<"optimize" | "saves">("optimize")
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  const tabs = [
+    { id: "optimize", icon: "✨", label: "Optimize" },
+    { id: "saves", icon: "📝", label: "My Saves" },
+  ]
   const charCount = formData.bio.length
   const maxChars = 500
 
@@ -93,22 +103,41 @@ export function UploadPage({ formData, setFormData, onSubmit }: UploadPageProps)
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 md:py-12">
+    <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="text-center mb-10">
-        <div className="flex items-center justify-center gap-3 mb-3">
-          <h1 className="font-serif text-5xl md:text-6xl font-semibold text-pencil">
-            ProfileGlow
-          </h1>
-          <span className="text-4xl">✨</span>
+      <header className="flex items-center justify-center px-4 py-5 border-b border-dashed border-pencil/20">
+        <div className="flex items-center gap-3">
+          <h1 className="font-serif text-4xl md:text-5xl font-semibold text-pencil">ProfileGlow</h1>
+          <span className="text-3xl">✨</span>
         </div>
+      </header>
+
+      <div className="flex flex-1 overflow-hidden">
+        <AppSidebar
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={(id) => setActiveTab(id as "optimize" | "saves")}
+          onLogout={onLogout}
+          open={sidebarOpen}
+          onOpenChange={setSidebarOpen}
+        />
+
+        <main className="flex-1 overflow-y-auto">
+          {activeTab === "saves" ? (
+            <div className="px-6 py-6">
+              <HistoryPanel />
+            </div>
+          ) : (
+    <div className="max-w-3xl mx-auto px-4 py-8 md:py-8">
+      {/* Subheader */}
+      <div className="text-center mb-10">
         <p className="font-sans text-lg text-muted-text">
           Your dating profile, polished by AI — in seconds.
         </p>
         <div className="mt-6 flex justify-center">
           <PenLineWithSparkle />
         </div>
-      </header>
+      </div>
 
       {/* Bio Textarea Section */}
       <section className="mb-10">
@@ -323,6 +352,10 @@ export function UploadPage({ formData, setFormData, onSubmit }: UploadPageProps)
           Made with 💕 by ProfileGlow
         </p>
       </footer>
+    </div>
+          )}
+        </main>
+      </div>
     </div>
   )
 }

@@ -71,28 +71,23 @@ export default function ProfileGlow() {
       <CoffeeStains />
       <BackgroundDoodles />
 
-      <button
-        onClick={handleLogout}
-        className="absolute top-4 right-4 z-20 text-sm text-gray-500 hover:text-gray-800 underline"
-      >
-        Log out
-      </button>
-
       <div className="relative z-10">
         {currentPage === "upload" ? (
           <div className={isTransitioning ? "page-flip-out" : ""}>
-            <UploadPage 
+            <UploadPage
               formData={formData}
               setFormData={setFormData}
               onSubmit={handleSubmit}
+              onLogout={handleLogout}
             />
           </div>
         ) : (
           <div className={isTransitioning ? "page-flip-out" : "page-flip-in"}>
-            <ResultsPage 
+            <ResultsPage
               formData={formData}
               rewrittenBios={rewrittenBios}
               onBack={handleBack}
+              onLogout={handleLogout}
             />
           </div>
         )}
