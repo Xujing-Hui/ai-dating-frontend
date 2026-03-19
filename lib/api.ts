@@ -126,6 +126,10 @@ async function requestJson<TResponse>(
     throw new ApiError(`Request failed with status ${res.status}`, { status: res.status, url, details })
   }
 
+  if (res.status === 204 || res.status === 205) {
+    return undefined as TResponse
+  }
+
   try {
     return (await res.json()) as TResponse
   } catch (err) {

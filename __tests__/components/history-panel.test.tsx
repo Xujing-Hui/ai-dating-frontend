@@ -5,6 +5,7 @@ import { HistoryPanel } from '@/components/history-panel'
 
 vi.mock('@/components/icons/notebook-icon', () => ({ NotebookIcon: () => null }))
 vi.mock('@/components/icons/speech-bubble-icon', () => ({ SpeechBubbleIcon: () => null }))
+vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 
 const mockGetHistory = vi.fn()
 const mockDeleteBio = vi.fn()
@@ -120,6 +121,42 @@ describe('HistoryPanel', () => {
     await waitFor(() => {
       expect(screen.getByText('(1)')).toBeInTheDocument()
     })
+  })
+
+  it('shows success toast after deleting a bio', async () => {
+    const { toast } = await import('sonner')
+    mockGetHistory.mockResolvedValue({ savedBios: [sampleBio], savedStarters: [] })
+    mockDeleteBio.mockResolvedValue(undefined)
+    render(<HistoryPanel />)
+
+    await waitFor(() => screen.getByText('I love hiking'))
+    await userEvent.click(screen.getByRole('button', { name: /delete saved bio/i }))
+
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Bio deleted'))
+  })
+
+  it('shows error toast when bio delete fails', async () => {
+    const { toast } = await import('sonner')
+    mockGetHistory.mockResolvedValue({ savedBios: [sampleBio], savedStarters: [] })
+    mockDeleteBio.mockRejectedValue(new Error('Server error'))
+    render(<HistoryPanel />)
+
+    await waitFor(() => screen.getByText('I love hiking'))
+    await userEvent.click(screen.getByRole('button', { name: /delete saved bio/i }))
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Failed to delete bio'))
+  })
+
+  it('keeps bio in list when delete fails', async () => {
+    mockGetHistory.mockResolvedValue({ savedBios: [sampleBio], savedStarters: [] })
+    mockDeleteBio.mockRejectedValue(new Error('Server error'))
+    render(<HistoryPanel />)
+
+    await waitFor(() => screen.getByText('I love hiking'))
+    await userEvent.click(screen.getByRole('button', { name: /delete saved bio/i }))
+
+    await waitFor(() => expect(mockDeleteBio).toHaveBeenCalled())
+    expect(screen.getByText('I love hiking')).toBeInTheDocument()
   })
 
   it('does not crash when getHistory fails', async () => {

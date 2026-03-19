@@ -112,6 +112,11 @@ describe('API functions (fetch mocked)', () => {
     expect(JSON.parse(init?.body as string)).toEqual({ content: 'my bio' })
   })
 
+  it('deleteBio resolves without error on 204 No Content', async () => {
+    vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 204 }))
+    await expect(deleteBio('abc-123')).resolves.toBeUndefined()
+  })
+
   it('deleteBio sends DELETE to correct URL', async () => {
     mockFetchOk({})
     await deleteBio('abc-123')

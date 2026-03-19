@@ -5,6 +5,7 @@ import { getHistory, deleteBio, deleteStarter, type SavedItem } from "@/lib/api"
 import { NotebookIcon } from "@/components/icons/notebook-icon"
 import { SpeechBubbleIcon } from "@/components/icons/speech-bubble-icon"
 import { Trash2, ChevronDown, ChevronUp, Loader2 } from "lucide-react"
+import { toast } from "sonner"
 
 export function HistoryPanel() {
   const [savedBios, setSavedBios] = useState<SavedItem[]>([])
@@ -24,14 +25,20 @@ export function HistoryPanel() {
     try {
       await deleteBio(id)
       setSavedBios(prev => prev.filter(b => b.id !== id))
-    } catch {}
+      toast.success('Bio deleted')
+    } catch {
+      toast.error('Failed to delete bio')
+    }
   }
 
   const handleDeleteStarter = async (id: string) => {
     try {
       await deleteStarter(id)
       setSavedStarters(prev => prev.filter(s => s.id !== id))
-    } catch {}
+      toast.success('Starter deleted')
+    } catch {
+      toast.error('Failed to delete starter')
+    }
   }
 
   if (loading) return (
