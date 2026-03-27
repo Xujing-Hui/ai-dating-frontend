@@ -6,6 +6,9 @@
 # dependencies
 node_modules/
 
+# build output
+.next/
+
 # Mac system files
 .DS_Store
 *.DS_Store
