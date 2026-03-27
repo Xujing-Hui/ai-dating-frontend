@@ -60,19 +60,14 @@ npm install
 
 ### 3. Configure environment variables
 
-Create a `.env` file in the project root:
-
-```env
-# Backend API URL (default: http://localhost:8080)
-NEXT_PUBLIC_API_URL=http://localhost:8080
-
-# Supabase (Settings → API)
-NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-public-key
+Copy the example file and fill in your values:
+```bash
+cp .env.example .env.local
 ```
 
-If the backend is deployed remotely, replace with the remote URL:
+Then open `.env.local` and replace the placeholder values with your actual keys. See `.env.example` for all required variables.
 
+If the backend is deployed remotely, set:
 ```env
 NEXT_PUBLIC_API_URL=https://dating-optimizer-backend.onrender.com
 ```
@@ -205,6 +200,20 @@ Deployed at: https://dating-optimizer.netlify.app
 | Xujing Hui     | Frontend |
 | Yihan Wang     | Backend  |
 | Kaichen Qu     | Backend  |
+
+## Commit Convention
+
+| Prefix       | Meaning                                      |
+| ------------ | -------------------------------------------- |
+| `feat:`      | New feature                                  |
+| `fix:`       | Bug fix                                      |
+| `docs:`      | Documentation changes                        |
+| `chore:`     | Cleanup, dependency updates, config          |
+| `style:`     | Code formatting (no logic changes)           |
+| `refactor:`  | Code restructuring (no new features or fixes)|
+| `test:`      | Adding or updating tests                     |
+
+Example: `feat: add drag-and-drop photo upload with validation`
 
 ## License
 
