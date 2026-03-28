@@ -206,10 +206,14 @@ function GlowUpTab({
   const [copiedBioIndex, setCopiedBioIndex] = useState<number | null>(null)
   const currentBio = optimizedBiosToShow[currentBioIndex]
 
-  const handleCopyBio = (index: number) => {
-    navigator.clipboard.writeText(optimizedBiosToShow[index].text)
-    setCopiedBioIndex(index)
-    setTimeout(() => setCopiedBioIndex(null), 1500)
+  const handleCopyBio = async (index: number) => {
+    try {
+      await navigator.clipboard.writeText(optimizedBiosToShow[index].text)
+      setCopiedBioIndex(index)
+      setTimeout(() => setCopiedBioIndex(null), 1500)
+    } catch {
+      toast.error("Failed to copy — try selecting the text manually")
+    }
   }
 
   return (
