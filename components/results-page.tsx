@@ -71,7 +71,7 @@ export function ResultsPage({ formData, rewrittenBios, rankedPhotos, onBack, onL
     if (!formData.bio) { setStartersLoading(false); return }
     generateOpeners({ bio: formData.bio, tone: vibeToTone(formData.vibe) })
       .then(res => setStarters(res.starters))
-      .catch(() => setStarters([]))
+      .catch(() => { setStarters([]); toast.error("Couldn't load conversation starters") })
       .finally(() => setStartersLoading(false))
   }, [formData.bio, formData.vibe])
 
